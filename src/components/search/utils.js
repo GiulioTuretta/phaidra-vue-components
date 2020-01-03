@@ -58,9 +58,9 @@ export function buildSearchDef ({ sortdef, q, page, pagesize, facetQueries, corp
     }
     if (ors.length > 0) {
       if (ors.length > 1) {
-        ands.push('(' + ors.join(' OR ') + ')')
+        ands.push('{!tag=' + facetQueries[i].id + '}' + '(' + ors.join(' OR ') + ')')
       } else {
-        ands.push(ors[0])
+        ands.push('{!tag=' + facetQueries[i].id + '}' + '(' + ors[0] + ')')
       }
     }
   }
@@ -118,6 +118,7 @@ export function buildParams ({ q, page, pagesize, sortdef, lang, facetQueries },
     rows: pagesize,
     sort: '',
     facet: true,
+    fq: [],
     'facet.query': []
   }
 
@@ -148,20 +149,20 @@ export function buildParams ({ q, page, pagesize, sortdef, lang, facetQueries },
               let childFacetLvl2 = childFacetLvl1.queries[k].childFacet
               for (let l = 0; l < childFacetLvl2.queries.length; l++) {
                 // days
-                params['facet.query'].push(childFacetLvl2.queries[l].query)
+                params['facet.query'].push('{!ex=' + facetQueries[i].id + ' key=\'' + facetQueries[i].id + '_' + childFacetLvl2.queries[l].id + '\'}' + childFacetLvl2.queries[l].query)
               }
             }
             // months
-            params['facet.query'].push(childFacetLvl1.queries[k].query)
+            params['facet.query'].push('{!ex=' + facetQueries[i].id + ' key=\'' + facetQueries[i].id + '_' + childFacetLvl1.queries[k].id + '\'}' + childFacetLvl1.queries[k].query)
           }
         }
-        params['facet.query'].push(facetQueries[i].queries[j].query)
+        params['facet.query'].push('{!ex=' + facetQueries[i].id + ' key=\'' + facetQueries[i].id + '_' + facetQueries[i].queries[j].id + '\'}' + facetQueries[i].queries[j].query)
       }
     }
   }
 
-  if (ands.length > 0) {
-    params['fq'] = ands.join(' AND ')
+  for (let i = 0; i < ands.length; i++) {
+    params['fq'].push(ands[i])
   }
 
   return params
